@@ -26,7 +26,7 @@ model.compile(optimizer='Nadam',
               loss=loss_fn,
               metrics=['accuracy'])
 model.fit(x_train, y_train, epochs=10, batch_size=10)
-model.evaluate(x_test,  y_test, verbose=2)
-
+_, acc=model.evaluate(x_test,  y_test, verbose=2)
+print("acc:%s"%(acc))
 
 
