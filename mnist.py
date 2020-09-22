@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+mnist数据集上的手写数字识别
 Created on Thu Feb 20 15:28:47 2020
 
 @author: Allen
