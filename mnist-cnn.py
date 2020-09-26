@@ -2,6 +2,8 @@
 """
 Created on Sun Mar  8 14:38:13 2020
 
+recognize digits in mnist using CNN
+
 @author: Allen
 """
 
