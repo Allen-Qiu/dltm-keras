@@ -50,7 +50,7 @@ data, count, dictionary, reverse_dictionary = build_dataset(
 #step 2: generate trainset
 window_size = 1
 vector_dim = 300
-epochs = 10
+epochs = 100000
 batch_size=1000
 vocab_size=len(dictionary)
 
