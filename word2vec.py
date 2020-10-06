@@ -97,7 +97,7 @@ class SimilarityCallback:
             valid_word = reverse_dictionary[valid_examples[i]]
             top_k = 8  # number of nearest neighbors
             sim = self._get_sim(valid_examples[i])
-            nearest = (-sim[:,0,0]).argsort()[1:top_k + 1]
+            nearest = np.argsort(-sim[:,0,0])[1:top_k + 1]
             log_str = 'Nearest to %s:' % valid_word
             for k in range(top_k):
                 close_word = reverse_dictionary[nearest[k]]
@@ -118,8 +118,7 @@ for cnt in range(epochs):
     loss = model.train_on_batch([word_target[idx],word_context[idx]], ndlabels[idx])
     if cnt % 1000 == 0:
         print("Iteration {}, loss={}".format(cnt, loss))
-
-    sim_cb.run_sim()
+sim_cb.run_sim()
 
         
         
