@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Apr  4 10:22:18 2020
-
+This is an example for building a simple text classifier
 @author: Allen
 """
 from numpy import array
