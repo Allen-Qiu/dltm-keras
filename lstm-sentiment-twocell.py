@@ -2,8 +2,8 @@
 """
 Created on Sat Oct 24 16:25:29 2020
 
-sentiment classifier of combining lstm cell and peephole cell
-and add pretrained embeddings
+sentiment classifier of combining two lstm
+one use pretrained embeddings
 
 @author: dell
 """
@@ -11,7 +11,6 @@ and add pretrained embeddings
 import numpy as np
 from tensorflow.keras.layers import RNN, Input
 import data_helpers
-from peepholecell import PeepholeLSTMCell
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -76,8 +75,7 @@ embed_layer2=preembed(inputs)
 
 # combining two type cells
 lstm1=LSTM(hidden_size)(embed_layer1)
-cell=PeepholeLSTMCell(hidden_size)
-lstm2=RNN(cell)(embed_layer2)
+lstm2=LSTM(hidden_size)(embed_layer2)
 conc_lstm=Concatenate()([lstm1,lstm2])
 hidden=Dense(100)(conc_lstm)
 dropout=Dropout(0.5)(hidden)

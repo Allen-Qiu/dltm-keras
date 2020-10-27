@@ -14,6 +14,7 @@ from tensorflow.keras import initializers
 from tensorflow.keras import regularizers
 from tensorflow.keras import constraints
 
+
 class PeepholeLSTMCell(Layer):
     def __init__(self, units,
                  activation='tanh',
@@ -82,6 +83,14 @@ class PeepholeLSTMCell(Layer):
             initializer=self.recurrent_initializer,
             regularizer=self.recurrent_regularizer,
             constraint=self.recurrent_constraint)
+        
+        # peephole kernel -- 2020.04
+        self.peephole_kernel=self.add_weight(
+                shape=(self.units, self.units * 3),
+                name='peephole_kernel',
+                initializer=self.recurrent_initializer,
+                regularizer=self.recurrent_regularizer,
+                constraint=self.recurrent_constraint)
 
         if self.use_bias:
             if self.unit_forget_bias:
@@ -113,6 +122,11 @@ class PeepholeLSTMCell(Layer):
         self.recurrent_kernel_c = (
             self.recurrent_kernel[:, self.units * 2: self.units * 3])
         self.recurrent_kernel_o = self.recurrent_kernel[:, self.units * 3:]
+
+        # peephole --2020.04
+        self.peephole_kernel_i = self.peephole_kernel[:, :self.units]
+        self.peephole_kernel_f = self.peephole_kernel[:, self.units: self.units * 2]
+        self.peephole_kernel_o = self.peephole_kernel[:, self.units * 2: self.units * 3]
 
         if self.use_bias:
             self.bias_i = self.bias[:self.units]
@@ -180,14 +194,20 @@ class PeepholeLSTMCell(Layer):
                 h_tm1_f = h_tm1
                 h_tm1_c = h_tm1
                 h_tm1_o = h_tm1
+                
+            # add peephole --2020.04
+            print('peephole')
             i = self.recurrent_activation(x_i + K.dot(h_tm1_i,
-                                                      self.recurrent_kernel_i))
+                                                      self.recurrent_kernel_i)
+                                              + K.dot(c_tm1,self.peephole_kernel_i))
             f = self.recurrent_activation(x_f + K.dot(h_tm1_f,
-                                                      self.recurrent_kernel_f))
+                                                      self.recurrent_kernel_f)
+                                              + K.dot(c_tm1,self.peephole_kernel_f))
             c = f * c_tm1 + i * self.activation(x_c + K.dot(h_tm1_c,
                                                             self.recurrent_kernel_c))
             o = self.recurrent_activation(x_o + K.dot(h_tm1_o,
-                                                      self.recurrent_kernel_o))
+                                                      self.recurrent_kernel_o)
+                                              + K.dot(c,self.peephole_kernel_o))
         else:
             if 0. < self.dropout < 1.:
                 inputs *= dp_mask[0]
