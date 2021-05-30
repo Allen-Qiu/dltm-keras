@@ -92,8 +92,7 @@ METRICS = [
        keras.metrics.FalsePositives(name='fp'),
        keras.metrics.TrueNegatives(name='tn'),
        keras.metrics.FalseNegatives(name='fn'), 
-      keras.metrics.BinaryAccuracy(name='accuracy')
-]
+      keras.metrics.BinaryAccuracy(name='accuracy')]
 
 def make_model(metrics=METRICS, output_bias=None):
   if output_bias is not None:
@@ -119,19 +118,18 @@ EPOCHS = 100
 BATCH_SIZE = 2048
 
 early_stopping = tf.keras.callbacks.EarlyStopping(
-    monitor='val_prc', 
+    monitor='val_loss', 
     verbose=1,
     patience=10,
-    mode='max',
+    mode='min',
     restore_best_weights=True)
 
-
-# 5.--- compare bias initialization ---
 initial_bias = np.log([pos/neg])
 model = make_model(output_bias=initial_bias)
 initial_weights = os.path.join(tempfile.mkdtemp(), 'initial_weights')
 model.save_weights(initial_weights)
 
+# 5.--- compare bias initialization ---
 # without initialization of bias
 model = make_model()
 model.load_weights(initial_weights)
@@ -196,7 +194,6 @@ baseline_results = model.evaluate(test_features, test_labels,
                                   batch_size=BATCH_SIZE, verbose=0)
 bacc, acc = bacc_acc(model.metrics_names,baseline_results)
 print('imbalaced: bacc=%0.4f, acc=%0.4f'%(bacc, acc))
-
 
 #7. --- using class weights to deal with class imbalance
 weight_for_0 = (1 / neg) * (total / 2.0)
