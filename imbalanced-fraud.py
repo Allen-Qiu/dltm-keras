@@ -212,7 +212,7 @@ weighted_history = weighted_model.fit(
     train_labels,
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
-    callbacks=[early_stopping],
+    # callbacks=[early_stopping],
     validation_data=(val_features, val_labels),
     # The class weights go here
     class_weight=class_weight)
