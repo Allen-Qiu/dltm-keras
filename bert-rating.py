@@ -20,7 +20,7 @@ from tensorflow.keras.layers import Average, Dense, Input, GlobalAveragePooling1
 seq_len = 500
 batch_size = 10
 epoch = 3
-local = "../model/bert-base-uncased"
+local = "bert-base-uncased"
 # 1. dataset ---------
 fin = open('../data/yelp-reviews.json')
 lines = fin.readlines()
