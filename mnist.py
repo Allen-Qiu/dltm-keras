@@ -21,7 +21,7 @@ model = tf.keras.models.Sequential([
   tf.keras.layers.Softmax()
 ])
 
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
 model.compile(optimizer='Nadam',
               loss=loss_fn,
               metrics=['accuracy'])
