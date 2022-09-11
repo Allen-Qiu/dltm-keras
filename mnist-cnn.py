@@ -27,7 +27,7 @@ model.add(Dense(1024,activation='relu', kernel_initializer='he_normal'))
 model.add(Dropout(0.5))
 model.add(Dense(10, activation='softmax'))
 
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
 model.compile(optimizer='Nadam',
               loss=loss_fn,
               metrics=['accuracy'])
