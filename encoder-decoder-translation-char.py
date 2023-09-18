@@ -10,7 +10,7 @@ import numpy as np
 
 lr          = 0.002   # learning rate
 batch_size  = 50      # Batch size for training.
-epochs      = 100      # Number of epochs to train for.
+epochs      = 90      # Number of epochs to train for.
 latent_dim  = 256     # Latent dimensionality of the encoding space.
 latent_dim2 = 128
 data_path = '../data/cmn.txt'
