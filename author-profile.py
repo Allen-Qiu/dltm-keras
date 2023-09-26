@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-Created on Thu Apr 23 08:19:04 2020
 sentence embedding with self attention for author profile
 @author: Allen
 """
 
 from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Input, LSTM, Dense, Dot, Flatten
 from tensorflow.keras.layers import Embedding, Dropout, Bidirectional
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -17,33 +16,33 @@ import tensorflow as tf
 import numpy as np
 import json
 
-#hyparameters
-da=30
-r=50
-embed_size=50
-hidden_size=200
-vocab_size=5000
-epoch=2
-time_steps=1000
+# hyparameters
+lr = 0.005
+da = 30
+r = 50
+embed_size = 64
+hidden_size = 200
+vocab_size = 5000
+epoch = 20
+time_steps = 1000
 
-#build dataset
-text=[]
-gender=[]
-age=[]
+# build dataset
+text = []
+gender = []
+age = []
 
-with open('author-profile.json') as f:
+with open('data/author-profile.json') as f:
     for line in f.readlines():
-        dic=json.loads(line)
+        dic = json.loads(line)
         text.append(dic['conversation'])
         gender.append(dic['gender'])
         age.append(dic['age_group'])
 
-
-t=Tokenizer(num_words=vocab_size,oov_token=None)
+t = Tokenizer(num_words=vocab_size, oov_token=None)
 t.fit_on_texts(text)
-encoded_docs=t.texts_to_sequences(text)
+encoded_docs = t.texts_to_sequences(text)
 x = pad_sequences(encoded_docs, maxlen=time_steps, padding='post')
-dic_age={item:id for id,item in enumerate(set(age))}
+dic_age = {item: id for id, item in enumerate(set(age))}
 y = [dic_age[item] for item in age]
 y = np.array(y)
 
@@ -58,35 +57,38 @@ x_train, x_dev = x_shuffled[:-1000], x_shuffled[-1000:]
 y_train, y_dev = y_shuffled[:-1000], y_shuffled[-1000:]
 
 # building model
-inputs = Input(shape=(time_steps,))
-embed = Embedding(vocab_size, embed_size)
-embed_input = embed(inputs)
-H =  Bidirectional(LSTM(hidden_size, return_sequences=True), name='H')(embed_input)
-ws=Dense(da,activation='tanh',use_bias=False, name='ws')(H)
-A=Dense(r, 
-        activation='softmax',
-        use_bias=False, name='A')(ws)
-M=Dot(axes=1, name='M')([H,A])
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-flat=Flatten()(M)
-outputs=Dense(len(set(age)),activation='softmax')(flat)
-model=Model(inputs=inputs,outputs=outputs)
+with strategy.scope():
+    inputs = Input(shape=(time_steps,))
+    embed = Embedding(vocab_size, embed_size)
+    embed_input = embed(inputs)
+    H = Bidirectional(LSTM(hidden_size, return_sequences=True), name='H')(embed_input)
+    ws = Dense(da, activation='tanh', use_bias=False, name='ws')(H)
+    A = Dense(r,
+              activation='softmax',
+              use_bias=False, name='A')(ws)
+    M = Dot(axes=1, name='M')([H, A])
 
-penal=tf.matmul(tf.transpose(A,[0,2,1]),A)
-penal=penal-K.eye(penal.shape[-1])
-model.add_loss(tf.norm(penal))
-model.summary()
+    flat = Flatten()(M)
+    fc = Dense(128, activation='relu')(flat)
+    outputs = Dense(len(set(age)), activation='softmax')(fc)
+    model = Model(inputs=inputs, outputs=outputs)
 
-loss=SparseCategoricalCrossentropy()
-model.compile(loss=loss, 
-              optimizer='adam', 
-              metrics=['categorical_accuracy'])
-    
-model.fit(x_train, y_train, epochs=epoch, verbose=1)
+    penal = tf.matmul(tf.transpose(A, [0, 2, 1]), A)
+    penal = penal - K.eye(penal.shape[-1])
+    # model.add_loss(tf.norm(penal))
+    # model.summary()
+
+    opt = Adam(learning_rate=lr)
+    loss = SparseCategoricalCrossentropy()
+    model.compile(loss=loss,
+                  optimizer='adam',
+                  metrics=['accuracy'])
+
+model.fit(x_train, y_train, epochs=epoch, validation_split=0.1, verbose=1)
 
 # evaluate the model
 loss, accuracy = model.evaluate(x_dev, y_dev, verbose=0)
 print('Accuracy: %f' % (accuracy))
-
-
-
