@@ -4,8 +4,8 @@ sentence embedding with self attention for author profile
 """
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import Input, LSTM, Dense, Dot, Flatten
+from tensorflow.keras.optimizers import Adamax
+from tensorflow.keras.layers import Input, LSTM, Dense, Dot, Flatten, Lambda
 from tensorflow.keras.layers import Embedding, Dropout, Bidirectional
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -17,21 +17,20 @@ import numpy as np
 import json
 
 # hyparameters
-lr = 0.005
-da = 30
-r = 50
+lr = 0.002
+da = 128
 embed_size = 64
-hidden_size = 200
+hidden_size = 256
 vocab_size = 5000
 epoch = 20
-time_steps = 1000
+time_steps = 512
 
 # build dataset
 text = []
 gender = []
 age = []
 
-with open('data/author-profile.json') as f:
+with open('../data/author-profile.json') as f:
     for line in f.readlines():
         dic = json.loads(line)
         text.append(dic['conversation'])
@@ -66,25 +65,27 @@ with strategy.scope():
     embed_input = embed(inputs)
     H = Bidirectional(LSTM(hidden_size, return_sequences=True), name='H')(embed_input)
     ws = Dense(da, activation='tanh', use_bias=False, name='ws')(H)
-    A = Dense(r,
+    A = Dense(2*hidden_size,
               activation='softmax',
               use_bias=False, name='A')(ws)
-    M = Dot(axes=1, name='M')([H, A])
+    M = Dot(axes=2, name='M')([H, A])
 
-    flat = Flatten()(M)
-    fc = Dense(128, activation='relu')(flat)
-    outputs = Dense(len(set(age)), activation='softmax')(fc)
+    # mid_layer = Lambda(lambda x: K.mean(x, axis=1))(M)
+    mid_layer = Flatten()(M)
+    fc1 = Dense(1024, activation='relu')(mid_layer)
+    fc2 = Dense(128, activation='tanh')(fc1)
+    outputs = Dense(len(set(age)), activation='softmax')(fc2)
     model = Model(inputs=inputs, outputs=outputs)
 
     penal = tf.matmul(tf.transpose(A, [0, 2, 1]), A)
     penal = penal - K.eye(penal.shape[-1])
-    # model.add_loss(tf.norm(penal))
+    model.add_loss(tf.norm(penal))
     # model.summary()
 
-    opt = Adam(learning_rate=lr)
+    opt = Adamax(learning_rate=lr)
     loss = SparseCategoricalCrossentropy()
     model.compile(loss=loss,
-                  optimizer='adam',
+                  optimizer=opt,
                   metrics=['accuracy'])
 
 model.fit(x_train, y_train, epochs=epoch, validation_split=0.1, verbose=1)
@@ -92,3 +93,5 @@ model.fit(x_train, y_train, epochs=epoch, validation_split=0.1, verbose=1)
 # evaluate the model
 loss, accuracy = model.evaluate(x_dev, y_dev, verbose=0)
 print('Accuracy: %f' % (accuracy))
+
+
