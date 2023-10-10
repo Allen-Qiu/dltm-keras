@@ -43,7 +43,7 @@ class CrossAttention(tf.keras.layers.Layer):
             value=context,
             return_attention_scores=True)    # 当前没有给出key, 所以使用value当作key
 
-        x = self.add([x, attn_output])       # 相当于Decoder的输出和计算注意力后的结果再做拼接
+        x = self.add([x, attn_output])       # 相当于Decoder的输出和计算注意力后的结果做求和
         x = self.layernorm(x)
         return x
 
