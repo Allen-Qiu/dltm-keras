@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+一个transformer的文本分类器
 https://keras.io/examples/nlp/text_classification_with_transformer/
 
-@author: qjt16
+@author: Allen Qiu
 """
-
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -15,7 +16,7 @@ class TransformerBlock(layers.Layer):
         super(TransformerBlock, self).__init__()
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = keras.Sequential(
-            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim),]
+            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim), ]
         )
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
@@ -29,7 +30,8 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
-    
+
+
 class TokenAndPositionEmbedding(layers.Layer):
     def __init__(self, maxlen, vocab_size, embed_dim):
         super(TokenAndPositionEmbedding, self).__init__()
@@ -42,6 +44,7 @@ class TokenAndPositionEmbedding(layers.Layer):
         positions = self.pos_emb(positions)
         x = self.token_emb(x)
         return x + positions
+
 
 # 2. data set
 vocab_size = 20000  # Only consider the top 20k words
@@ -73,12 +76,15 @@ model = keras.Model(inputs=inputs, outputs=outputs)
 
 model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
 history = model.fit(
-    x_train, y_train, batch_size=32, epochs=2, validation_data=(x_val, y_val)
+    x_train, y_train, batch_size=32, epochs=5, validation_data=(x_val, y_val)
 )
 
-
-
-
+y_hat = model.predict(x_val, verbose=0)
+y_pred = np.argmax(y_hat, axis=1)
+m = tf.keras.metrics.Accuracy()
+m.update_state(y_val, y_pred)
+acc = m.result().numpy()
+print(f"Accuracy in test: {acc}")
 
 
 
