@@ -1,5 +1,5 @@
 """
-使用转置卷积GAN(DCGAN)生成手写数字
+使用转置卷积+GAN(DCGAN)生成手写数字
 """
 
 import tensorflow as tf
@@ -8,7 +8,7 @@ from tensorflow.keras import layers
 import time
 from IPython import display
 
-# 生成器
+# 转置卷积图片生成器
 def make_generator_model():
     model = tf.keras.Sequential()
     model.add(layers.Dense(7*7*256, use_bias=False, input_shape=(100,)))
@@ -65,13 +65,13 @@ def train_step(generator, discriminator, images, noise_dim):
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-      generated_images = generator(noise, training=True)
+        generated_images = generator(noise, training=True)
 
-      real_output = discriminator(images, training=True)
-      fake_output = discriminator(generated_images, training=True)
+        real_output = discriminator(images, training=True)
+        fake_output = discriminator(generated_images, training=True)
 
-      gen_loss = generator_loss(fake_output)
-      disc_loss = discriminator_loss(real_output, fake_output)
+        gen_loss = generator_loss(fake_output)
+        disc_loss = discriminator_loss(real_output, fake_output)
 
     gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
     gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
@@ -80,32 +80,32 @@ def train_step(generator, discriminator, images, noise_dim):
     discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
 
 def train(generator, discriminator, dataset, epochs, noise_dim):
-  for epoch in range(epochs):
-    start = time.time()
+    for epoch in range(epochs):
+        start = time.time()
 
-    for image_batch in dataset:
-      train_step(generator, discriminator, image_batch, noise_dim)
+        for image_batch in dataset:
+            train_step(generator, discriminator, image_batch, noise_dim)
 
-    # 产生图片
-    display.clear_output(wait=True)
-    generate_and_save_images(generator,
-                             epoch + 1,
-                             seed)
+        # 产生图片
+        display.clear_output(wait=True)
+        generate_and_save_images(generator,
+                                 epoch + 1,
+                                 seed)
 
-    print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
+        print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
 
 def generate_and_save_images(model, epoch, test_input):
-  predictions = model(test_input, training=False)
+    predictions = model(test_input, training=False)
 
-  fig = plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(4, 4))
 
-  for i in range(predictions.shape[0]):
-      plt.subplot(4, 4, i+1)
-      plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
-      plt.axis('off')
+    for i in range(predictions.shape[0]):
+        plt.subplot(4, 4, i+1)
+        plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+        plt.axis('off')
 
-  plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
-  plt.show()
+    plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+    plt.show()
 
 # 超参数
 BUFFER_SIZE = 60000
