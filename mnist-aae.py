@@ -1,8 +1,5 @@
 """
-Created on Tue Sep  6 17:14:46 2022
-
 using Adversarial Autoencoder visulizes MNIST dataset
-
 @author: Allen Qiu
 """
 
@@ -23,6 +20,7 @@ batch_size   = 256
 lam          = 0.2
 
 #%% building model
+
 lrelu = tf.keras.layers.LeakyReLU(0.2)
 input_img = keras.Input(shape=(784,))
 n_layer1 = tf.keras.layers.BatchNormalization()(input_img)
@@ -56,7 +54,7 @@ autoencoder.compile(optimizer=op, loss=mse)
 # discriminator
 discriminator = tf.keras.Sequential([
     Dense(128, activation='relu', input_shape=(encoding_dim,)),
-    Dense(64, activation='relu'),
+    Dense(64, activation='relu',input_shape=(encoding_dim,)),
     Dense(1, activation="sigmoid")
     ]);
 cross_entropy = tf.keras.losses.BinaryCrossentropy()
@@ -90,13 +88,12 @@ for epoch in np.arange(epochs):
     for x in dataset:
         z = np.random.normal(size=(len(x), encoding_dim))
         with tf.GradientTape() as gen_tape, tf.GradientTape() as dis_tape:
-            x_decode = autoencoder(x, training=True)
             x_encode = encoder(x, training=True)
+            x_decode = decoder(x_encode, training=True)
             f_output = discriminator(x_encode)
             r_output = discriminator(z)
 
-            gen_loss = mse(x, x_decode) + lam * generator_loss(f_output)
-            gen_loss = mse(x, x_decode)
+            gen_loss = mse(x, x_decode) + 0.01*generator_loss(f_output)
             dis_loss = discriminator_loss(r_output, f_output)
         gradients_of_generator = gen_tape.gradient(gen_loss, autoencoder.trainable_variables)
         op.apply_gradients(zip(gradients_of_generator, autoencoder.trainable_variables))
@@ -126,6 +123,7 @@ plt.figure()
 
 for i in np.arange(len(labels)):
     idx = y_train == labels[i]
-    plt.scatter(x_encoded[idx,0], x_encoded[idx,1], s=0.1, label=labels[i])
+    plt.scatter(x_encoded[idx,0], x_encoded[idx,1], s=0.05, label=labels[i])
 plt.legend()
 plt.show()
+
