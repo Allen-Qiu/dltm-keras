@@ -34,9 +34,8 @@ def sampling(args):
     z_mean, z_log_var = args
     epsilon = K.random_normal(shape=(batch_size, encoding_dim), mean=0.,
                               stddev=epsilon_std)
-    # return z_mean + K.exp(z_log_var / 2) * epsilon
-    return z_mean + z_log_var * epsilon
-
+    return z_mean + K.exp(z_log_var / 2) * epsilon
+    
 z = Lambda(sampling, output_shape=(encoding_dim,))([z_mean, z_log_var])
 decoded1 = Dense(64, activation='relu')(z)
 decoded2 = Dense(128, activation='relu')(decoded1)
