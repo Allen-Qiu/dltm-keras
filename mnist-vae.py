@@ -35,7 +35,7 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch_size, encoding_dim), mean=0.,
                               stddev=epsilon_std)
     return z_mean + K.exp(z_log_var / 2) * epsilon
-    
+
 z = Lambda(sampling, output_shape=(encoding_dim,))([z_mean, z_log_var])
 decoded1 = Dense(64, activation='relu')(z)
 decoded2 = Dense(128, activation='relu')(decoded1)
@@ -56,10 +56,10 @@ decoder = tf.keras.Sequential([encoded_input,
                                autoencoder.layers[-2],
                                autoencoder.layers[-1]])
 
-kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+kl_loss = - 0.5 * K.sum(2 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
 
 kloss = K.mean(kl_loss)
-autoencoder.add_loss(0.0005 * kloss)
+autoencoder.add_loss(0.0002 * kloss)
 mse = tf.keras.losses.MeanSquaredError()
 op  = tf.keras.optimizers.Adamax(learning_rate=lr)
 autoencoder.compile(optimizer=op, loss=mse)
