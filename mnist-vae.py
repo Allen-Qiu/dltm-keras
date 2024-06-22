@@ -56,8 +56,7 @@ decoder = tf.keras.Sequential([encoded_input,
                                autoencoder.layers[-2],
                                autoencoder.layers[-1]])
 
-kl_loss = - 0.5 * K.sum(2 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-
+kl_loss = 0.5 * K.sum(K.square(z_mean) + K.exp(z_log_var -2 - z_log_var ), axis=-1)
 kloss = K.mean(kl_loss)
 autoencoder.add_loss(0.0002 * kloss)
 mse = tf.keras.losses.MeanSquaredError()
