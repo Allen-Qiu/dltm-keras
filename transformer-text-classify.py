@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 一个transformer的文本分类器
-https://keras.io/examples/nlp/text_classification_with_transformer/
 
 @author: Allen Qiu
 """
